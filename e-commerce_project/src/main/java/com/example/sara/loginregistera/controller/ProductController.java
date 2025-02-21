@@ -1,20 +1,16 @@
 package com.example.sara.loginregistera.controller;
 
-import com.example.sara.loginregistera.Size;
-import com.example.sara.loginregistera.model.CartItem;
 import com.example.sara.loginregistera.model.Product;
-import com.example.sara.loginregistera.service.CartService;
 import com.example.sara.loginregistera.service.ProductService;
-import com.example.sara.loginregistera.service.StockService;
-import com.example.sara.loginregistera.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
+
+import java.util.List;
 
 @Controller
 public class ProductController {
@@ -22,152 +18,128 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    @Autowired
-    private UserService userService;
-    // Additional Autowired Services
-    @Autowired
-    private StockService stockService;
-
     /**
-     * Display the home page with product listing
+     * Display all products on the `/home` page.
+     * Show admin-specific controls (add, edit, delete) if the user is an admin.
      */
     @GetMapping("/home")
     public String productList(Model model, HttpSession session) {
-        // Fetch all products
         model.addAttribute("products", productService.findAllProducts());
 
-        // Checking user role to show Admin functionality
+        // Check if logged-in user is an admin
         Object userRole = session.getAttribute("userRole");
         model.addAttribute("isAdmin", userRole != null && userRole.toString().equals("ADMIN"));
 
-        return "home";
+        return "home"; // Render `home.jsp`
     }
 
     /**
-     * Form for Adding a New Product (Admin Only)
+     * Display the add product page (Admin-only).
+     *
+     * @param model   Adds an empty product object to the model for the form.
+     * @param session Checks user role for admin access.
+     * @return The `product_form.jsp` view for creating a new product.
      */
-    @GetMapping("/products/new")
-    public String newProductForm(Model model, HttpSession session) {
-        if (!isAdmin(session)) return "redirect:/home";
-
-        model.addAttribute("product", new Product());
-        return "product_form";
-    }
-
-    /**
-     * Save a New Product (Admin Only)
-     */
-    @PostMapping("/products")
-    public String createProduct(@Valid @ModelAttribute("product") Product product, BindingResult result, HttpSession session) {
-        if (!isAdmin(session)) return "redirect:/home";
-
-        if (result.hasErrors()) {
-            return "product_form";
+    @GetMapping("/products/add")
+    public String addProductForm(Model model, HttpSession session) {
+        if (!isAdmin(session)) {
+            return "redirect:/home"; // Redirect non-admin users to `/home`
         }
 
-        productService.saveProduct(product);
-        return "redirect:/home";
+        model.addAttribute("product", new Product()); // Add an empty product object for the form
+        return "product_form"; // Render the `product_form.jsp` view
     }
 
     /**
-     * Delete Product (Admin Only)
+     * Handle form submission for adding a new product (Admin-only).
+     *
+     * @param product The product details submitted via the form.
+     * @param session Checks user role for admin access.
+     * @return Redirect to `/home` after successfully adding the product.
+     */
+    @PostMapping("/products/add")
+    public String createProduct(@Valid @ModelAttribute("product") Product product, HttpSession session, Model model) {
+        if (!isAdmin(session)) {
+            return "redirect:/home"; // Restrict access to admins
+        }
+
+        productService.saveProduct(product); // Save the product
+        return "redirect:/home"; // Redirect back to `/home`
+    }
+    /**
+     * Display product details for a specific product.
+     */
+    @GetMapping("/products/details/{id}")
+    public String productDetails(@PathVariable Long id, Model model) {
+        Product product = productService.findProductById(id);
+        if (product == null) {
+            return "redirect:/home"; // Redirect if product is not found
+        }
+        model.addAttribute("product", product);
+        return "product_details"; // Render product_detail.jsp
+    }
+
+    /**
+     * Deletes a product by ID (Admin-only).
+     *
+     * @param id      The ID of the product to delete.
+     * @param session Checks user role for admin access.
+     * @return Redirect to `/home` after deletion.
      */
     @GetMapping("/products/delete/{id}")
     public String deleteProduct(@PathVariable Long id, HttpSession session) {
-        if (!isAdmin(session)) return "redirect:/home";
+        if (!isAdmin(session)) {
+            return "redirect:/home"; // Restrict access to admins
+        }
 
-        productService.deleteProduct(id);
-        return "redirect:/home";
+        productService.deleteProduct(id); // Delete the product
+        return "redirect:/home"; // Reload `/home`
     }
 
     /**
-     * Helper Method to Check Admin Role
+     * Displays a product details page for editing (Admin-only).
+     */
+    @GetMapping("/products/edit/{id}")
+    public String editProductForm(@PathVariable Long id, Model model, HttpSession session) {
+        if (!isAdmin(session)) {
+            return "redirect:/home"; // Restrict access to admins
+        }
+
+        Product product = productService.findProductById(id);
+        if (product == null) {
+            return "redirect:/home"; // Redirect to `home` if product is not found
+        }
+
+        model.addAttribute("product", product); // Add the product to the model
+        return "edit_form"; // Render `edit_form.jsp` for editing
+    }
+
+    /**
+     * Handle the edit form submission (Admin-only).
+     */
+    @PostMapping("/products/edit/{id}")
+    public String editProduct(@PathVariable Long id, @Valid @ModelAttribute("product") Product product, HttpSession session) {
+        if (!isAdmin(session)) {
+            return "redirect:/home"; // Restrict access to admins
+        }
+
+        product.setId(id); // Ensure the product ID remains unchanged
+        productService.saveProduct(product); // Save the updated product
+        return "redirect:/home"; // Redirect back to `/home`
+    }
+
+    /**
+     * Helper method to check if the logged-in user is an admin.
      */
     private boolean isAdmin(HttpSession session) {
         Object userRole = session.getAttribute("userRole");
         return userRole != null && userRole.toString().equals("ADMIN");
     }
-    // Display Edit Product Form (Admin Only)
-    @GetMapping("/products/edit/{id}")
-    public String editProductForm(@PathVariable Long id, Model model, HttpSession session) {
-        // Restrict non-admin users
-        if (!isAdmin(session)) {
-            return "redirect:/home";
-        }
-
-        // Retrieve the product by ID
-        Product product = productService.findProductById(id);
-        if (product == null) {
-            return "redirect:/home"; // Redirect if no product is found
-        }
-
-        // Add the product to the model with the name 'editProduct'
-        model.addAttribute("editProduct", product);
-        return "edit_form"; // Render edit_form.jsp
+    @GetMapping("/{category}")
+    public String viewCategory(@PathVariable String category, Model model) {
+        List<Product> filteredProducts = productService.findProductsByCategory(category);
+        model.addAttribute("products", filteredProducts);
+        model.addAttribute("category", category);
+        return "category_list"; // Render JSP to display filtered products
     }
-
-    // Save the Updated Product (Admin Only)
-    @PostMapping("/products/edit/{id}")
-    public String updateProduct(
-            @PathVariable Long id,
-            @Valid @ModelAttribute("editProduct") Product product,
-            BindingResult result,
-            HttpSession session
-    ) {
-        // Restrict non-admin users
-        if (!isAdmin(session)) {
-            return "redirect:/home";
-        }
-
-        // Handle validation errors
-        if (result.hasErrors()) {
-            return "edit_form";
-        }
-
-        // Update the product with the same ID in the database
-        product.setId(id); // Ensure the ID remains unchanged
-        productService.saveProduct(product); // Save updated product
-        return "redirect:/home"; // Redirect to home after successful update
-    }
-    @GetMapping("/products/details/{id}")
-    public String productDetails(@PathVariable Long id, Model model, HttpSession session) {
-        // Retrieve the product by ID
-        Product product = productService.findProductById(id);
-
-        // If product does not exist, redirect to the home page
-        if (product == null) {
-            return "redirect:/home";
-        }
-
-        // Add the product to the model
-        model.addAttribute("product", product);
-
-        // Add sizes (enum) for the dropdown in the JSP
-        model.addAttribute("sizes", Size.values());
-
-        // Add a new CartItem object to bind to the form (for adding to the cart)
-        model.addAttribute("cartItem", new CartItem());
-
-        // Determine if the logged-in user is an admin
-        Object userRole = session.getAttribute("userRole");
-        boolean isAdmin = userRole != null && userRole.toString().equals("ADMIN");
-        model.addAttribute("isAdmin", isAdmin);
-
-        return "product_details"; // Directs to product_details.jsp
-    }
-    //Your method to render the product details page
-    @GetMapping("/product/{id}")
-    public String showProductDetails(@PathVariable Long id, Model model) {
-        Product product = productService.findById(id);
-        if (product == null) {
-            throw new RuntimeException("Product not found with ID: " + id);
-        }
-
-        // Add the enum values to the model
-        model.addAttribute("product", product);
-        model.addAttribute("sizes", Size.values()); // Size.values() returns an array of enum constants
-        return "product_details"; // Render product_details.jsp
-    }
-
-
 }

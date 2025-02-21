@@ -18,20 +18,29 @@ public class ProductService {
         return productRepo.findAll();
     }
 
+    public List<Product> findProductsByCategory(String category) {
+        return productRepo.findByCategoryIgnoreCase(category); // Fetch products by category
+    }
+
     public Product findProductById(Long id) {
         return productRepo.findById(id).orElse(null);
     }
 
-    public Product saveProduct(Product product) {
-        return productRepo.save(product);
+    public void saveProduct(Product product) {
+        productRepo.save(product);
     }
 
     public void deleteProduct(Long id) {
         productRepo.deleteById(id);
     }
-    //pjesa e cart
+    // Find product by ID
     public Product findById(Long productId) {
         Optional<Product> optionalProduct = productRepo.findById(productId);
-        return optionalProduct.orElse(null); // Return the product if found, else return null
+        return optionalProduct.orElse(null); // Return product if found, else null
     }
+
+
+//    public List<Product> findProductsByCategoryNew(String category) {
+//        return productRepo.findByCategory(category);
+//    }
 }

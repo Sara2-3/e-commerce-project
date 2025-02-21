@@ -13,11 +13,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.util.logging.Logger;
+
 @Controller
 public class UserController {
 
     @Autowired
     private UserService userServ;
+
+    private final Logger logger = Logger.getLogger(UserController.class.getName());
 
     /**
      * Render the login/registration page if the user is not logged in.
@@ -56,6 +60,9 @@ public class UserController {
         User registeredUser = userServ.validateRegistration(newUser, result);
 
         if (result.hasErrors()) {
+            // Log error information for debugging
+            logger.info("Registration failed: " + result.toString());
+
             // Send the user back to the registration page if there are errors
             return "register";
         }
@@ -63,6 +70,7 @@ public class UserController {
         // Save the registered user's ID and role in session
         session.setAttribute("userID", registeredUser.getId());
         session.setAttribute("userRole", registeredUser.getRole());
+        logger.info("Registered user: " + registeredUser.getId() + " Role: " + registeredUser.getRole());
 
         return "redirect:/dashboard";
     }
@@ -75,6 +83,9 @@ public class UserController {
         User loggedInUser = userServ.validateLogin(newLogin, result);
 
         if (result.hasErrors()) {
+            // Log error information for debugging
+            logger.info("Login failed: " + result.toString());
+
             // Forward new user registration object for index page
             viewModel.addAttribute("newUser", new User());
             return "login";
@@ -83,6 +94,7 @@ public class UserController {
         // Save the logged-in user's ID and role in session
         session.setAttribute("userID", loggedInUser.getId());
         session.setAttribute("userRole", loggedInUser.getRole());
+        logger.info("Logged in user: " + loggedInUser.getId() + " Role: " + loggedInUser.getRole());
 
         return "redirect:/dashboard";
     }
@@ -95,14 +107,19 @@ public class UserController {
         // Check if user is logged in
         Object userIDObj = session.getAttribute("userID");
         if (userIDObj == null) {
+            logger.info("No user logged in. Redirecting to login page.");
             return "redirect:/";
         }
 
         Long userID = (Long) userIDObj;
         User loggedInUser = userServ.getUserById(userID);
         if (loggedInUser == null) {
+            logger.info("User not found in database. Redirecting to login page.");
             return "redirect:/";
         }
+
+        // Log user role for debugging
+        logger.info("Current user: " + loggedInUser.getId() + " Role: " + loggedInUser.getRole());
 
         // Pass the logged-in user and role to the dashboard
         viewModel.addAttribute("loggedInUser", loggedInUser);
@@ -116,7 +133,11 @@ public class UserController {
      */
     @PostMapping("/logout")
     public String logoutUser(HttpSession session) {
+        // Log the logout
+        logger.info("Logging out user with session: " + session.getAttribute("userID"));
+
         session.invalidate(); // Clear the session
+
         return "redirect:/";
     }
 }

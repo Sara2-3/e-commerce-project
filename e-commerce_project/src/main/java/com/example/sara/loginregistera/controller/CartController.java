@@ -34,36 +34,43 @@ public class CartController {
     }
 
     // Add a product to the cart
+    // Add a product to the cart
     @PostMapping("/add")
     public String addToCart(@RequestParam Long productId,
                             @RequestParam String size,
                             @RequestParam int quantity,
                             Model model) {
-        // Check if product exists
+        // 1. Validate if the product exists
         Product product = productService.findById(productId);
 
         if (product == null) {
-            // Gracefully display an error message on the product details page
-            model.addAttribute("errorMessage", "Product not found with ID: " + productId);
-            return "product_details"; // Return to product details page with an error
+            // Product doesn't exist, add an error message and return to product details page
+            model.addAttribute("errorMessage", "Product not found. Please try again.");
+            return "product_detail"; // Render product_details.jsp with error message
         }
 
-        // Validate size input and add to cart
+        // 2. Validate the size
+        Size selectedSize;
         try {
-            Size selectedSize = Size.valueOf(size.toUpperCase());
-            CartItem cartItem = new CartItem();
-            cartItem.setProduct(product);
-            cartItem.setSize(selectedSize);
-            cartItem.setQuantity(quantity);
-
-            cartService.addToCart(cartItem); // Add product to cart
-            return "redirect:/cart"; // Redirect to cart page
+            selectedSize = Size.valueOf(size.toUpperCase());
         } catch (IllegalArgumentException e) {
-            model.addAttribute("errorMessage", "Invalid size selected. Please try again.");
-            return "product_details"; // Return to product details page with an error
+            // Invalid size value provided by the user
+            model.addAttribute("errorMessage", "Invalid size selected. Please choose a valid size.");
+            return "product_details"; // Show error on product_details page
         }
-    }
 
+        // 3. Add item to the cart
+        CartItem cartItem = new CartItem();
+        cartItem.setProduct(product);
+        cartItem.setSize(selectedSize);
+        cartItem.setQuantity(quantity);
+
+        // Call the cart service to add this product to the user's cart
+        cartService.addToCart(cartItem);
+
+        // 4. Redirect the user to the cart page after successful addition
+        return "redirect:/cart"; // Redirect to the cart page to show updated cart
+    }
     // Remove a product from the cart
     @GetMapping("/remove/{productId}")
     public String removeProductFromCart(@PathVariable Long productId, @RequestParam String size, Model model) {

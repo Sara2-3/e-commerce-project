@@ -1,46 +1,34 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix = "c" uri = "http://java.sun.com/jsp/jstl/core"%>
-<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
-<%@ page isErrorPage="true" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <html>
 <head>
-    <title>${product.name}</title>
+    <title>Product Details</title>
+    <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
 <div class="container">
 
-    <!-- Product Details -->
     <h1>${product.name}</h1>
     <img src="${product.imageUrl}" alt="${product.name}" />
-
     <p>${product.description}</p>
-    <p><strong>Price:</strong> $${product.price}</p>
+    <p>Price: $${product.price}</p>
 
-    <!-- Error Message -->
-    <c:if test="${not empty errorMessage}">
-        <p style="color: red;">${errorMessage}</p>
-    </c:if>
 
-    <!-- Add to Cart Form -->
+    <!-- Add to Cart -->
     <form action="/cart/add" method="POST">
         <input type="hidden" name="productId" value="${product.id}" />
-
-        <!-- Size Selection -->
-        <label for="size">Select Size:</label>
+        <label for="size">Size:</label>
         <select name="size" id="size" required>
-            <c:forEach items="${sizes}" var="size">
-                <option value="${size}">${size}</option>
-            </c:forEach>
+            <option value="S">S</option>
+            <option value="M">M</option>
+            <option value="L">L</option>
+            <option value="XL">XL</option>
         </select>
-
-        <!-- Quantity -->
         <label for="quantity">Quantity:</label>
-        <input type="number" id="quantity" name="quantity" min="1" value="1" required />
-
+        <input type="number" name="quantity" id="quantity" min="1" required />
         <button type="submit">Add to Cart</button>
     </form>
-
-    <a href="/home">Back to Product List</a>
+    <a href="/home">Back to Home</a>
 </div>
 </body>
 </html>
