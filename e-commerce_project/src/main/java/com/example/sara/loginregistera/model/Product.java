@@ -28,7 +28,28 @@ public class Product {
     @NotBlank(message = "Category is required.") // Ensure category is given
     private String category; // NEW: Product category (DRESSES, TOPS, PANTS)
 
+    // Inventory fields for sizes
+    private int stockS = 5;
+    private int stockM = 5;
+    private int stockL = 5;
+    private int stockXL = 5;
 
+    public int getStockS() {
+        return stockS;
+    }
+
+    public void setStockS(int stockS) {
+        this.stockS = stockS;
+    }
+
+    public int getStockM() { return stockM; }
+    public void setStockM(int stockM) { this.stockM = stockM; }
+
+    public int getStockL() { return stockL; }
+    public void setStockL(int stockL) { this.stockL = stockL; }
+
+    public int getStockXL() { return stockXL; }
+    public void setStockXL(int stockXL) { this.stockXL = stockXL; }
 
     // Getters and Setters
     public Long getId() { return id; }

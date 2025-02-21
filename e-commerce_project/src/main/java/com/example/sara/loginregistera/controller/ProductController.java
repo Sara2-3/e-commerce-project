@@ -43,32 +43,28 @@ public class ProductController {
     @GetMapping("/products/add")
     public String addProductForm(Model model, HttpSession session) {
         if (!isAdmin(session)) {
-            return "redirect:/home"; // Redirect non-admin users to `/home`
+            return "redirect:/home"; // Redirect regular users to `/home`
         }
 
         model.addAttribute("product", new Product()); // Add an empty product object for the form
-        return "product_form"; // Render the `product_form.jsp` view
+        return "product_form"; // Render the `product_form` JSP for admins
     }
 
     /**
      * Handle form submission for adding a new product (Admin-only).
-     *
-     * @param product The product details submitted via the form.
-     * @param session Checks user role for admin access.
-     * @return Redirect to `/home` after successfully adding the product.
      */
     @PostMapping("/products/add")
-    public String createProduct(@Valid @ModelAttribute("product") Product product, HttpSession session, Model model) {
+    public String createProduct(@Valid @ModelAttribute("product") Product product,
+                                HttpSession session) {
         if (!isAdmin(session)) {
-            return "redirect:/home"; // Restrict access to admins
+            return "redirect:/home"; // Restrict access to non-admins
         }
 
+
         productService.saveProduct(product); // Save the product
-        return "redirect:/home"; // Redirect back to `/home`
+        return "redirect:/home"; // Redirect back to the `/home` page
     }
-    /**
-     * Display product details for a specific product.
-     */
+
     @GetMapping("/products/details/{id}")
     public String productDetails(@PathVariable Long id, Model model) {
         Product product = productService.findProductById(id);

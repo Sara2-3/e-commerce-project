@@ -38,6 +38,35 @@ public class ProductService {
         Optional<Product> optionalProduct = productRepo.findById(productId);
         return optionalProduct.orElse(null); // Return product if found, else null
     }
+    // Check inventory for a specific size
+    public boolean isStockAvailable(Product product, String size, int quantity) {
+        switch (size.toUpperCase()) {
+            case "S": return product.getStockS() >= quantity;
+            case "M": return product.getStockM() >= quantity;
+            case "L": return product.getStockL() >= quantity;
+            case "XL": return product.getStockXL() >= quantity;
+            default: return false;
+        }
+    }
+
+    // Deduct inventory for a specific size
+    public void updateStock(Product product, String size, int quantity) {
+        switch (size.toUpperCase()) {
+            case "S":
+                product.setStockS(product.getStockS() - quantity);
+                break;
+            case "M":
+                product.setStockM(product.getStockM() - quantity);
+                break;
+            case "L":
+                product.setStockL(product.getStockL() - quantity);
+                break;
+            case "XL":
+                product.setStockXL(product.getStockXL() - quantity);
+                break;
+        }
+        saveProduct(product); // Persist changes
+    }
 
 
 //    public List<Product> findProductsByCategoryNew(String category) {

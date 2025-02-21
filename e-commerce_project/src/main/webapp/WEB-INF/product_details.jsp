@@ -1,5 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ page isErrorPage="true" %>
 <html>
 <head>
     <title>Product Details</title>
@@ -7,11 +9,14 @@
 </head>
 <body>
 <div class="container">
+ , i
 
-    <h1>${product.name}</h1>
-    <img src="${product.imageUrl}" alt="${product.name}" />
-    <p>${product.description}</p>
-    <p>Price: $${product.price}</p>
+    <div class="product-details">
+        <img src="${product.imageUrl}" alt="${product.name}" />
+        <h2>${product.name}</h2>
+        <p>${product.description}</p>
+        <p>Price: $${product.price}</p>
+    </div>
 
 
     <!-- Add to Cart -->

@@ -1,4 +1,7 @@
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ page isErrorPage="true" %>
 <html>
 <head>
     <title>Product List</title>
@@ -28,7 +31,6 @@
 <div class="product-list">
     <c:forEach items="${products}" var="product">
         <div class="product-item">
-            <!-- Product Image and Details -->
             <a href="/products/details/${product.id}">
                 <img src="${product.imageUrl}" alt="${product.name}" class="product-image" />
             </a>

@@ -33,8 +33,45 @@ public class CartController {
         return "cart"; // Renders cart.jsp
     }
 
+
     // Add a product to the cart
     // Add a product to the cart
+//    @PostMapping("/add")
+//    public String addToCart(@RequestParam Long productId,
+//                            @RequestParam String size,
+//                            @RequestParam int quantity,
+//                            Model model) {
+//        // 1. Validate if the product exists
+//        Product product = productService.findById(productId);
+//
+//        if (product == null) {
+//            // Product doesn't exist, add an error message and return to product details page
+//            model.addAttribute("errorMessage", "Product not found. Please try again.");
+//            return "product_details"; // Render product_details.jsp with error message
+//        }
+//
+//        // 2. Validate the size
+//        Size selectedSize;
+//        try {
+//            selectedSize = Size.valueOf(size.toUpperCase());
+//        } catch (IllegalArgumentException e) {
+//            // Invalid size value provided by the user
+//            model.addAttribute("errorMessage", "Invalid size selected. Please choose a valid size.");
+//            return "product_details"; // Show error on product_details page
+//        }
+//
+//        // 3. Add item to the cart
+//        CartItem cartItem = new CartItem();
+//        cartItem.setProduct(product);
+//        cartItem.setSize(selectedSize);
+//        cartItem.setQuantity(quantity);
+//
+//        // Call the cart service to add this product to the user's cart
+//        cartService.addToCart(cartItem);
+//
+//        // 4. Redirect the user to the cart page after successful addition
+//        return "redirect:/cart"; // Redirect to the cart page to show updated cart
+//    }
     @PostMapping("/add")
     public String addToCart(@RequestParam Long productId,
                             @RequestParam String size,
@@ -42,33 +79,42 @@ public class CartController {
                             Model model) {
         // 1. Validate if the product exists
         Product product = productService.findById(productId);
-
         if (product == null) {
-            // Product doesn't exist, add an error message and return to product details page
             model.addAttribute("errorMessage", "Product not found. Please try again.");
-            return "product_detail"; // Render product_details.jsp with error message
+            return "product_details"; // Redirect to product_details with an error
         }
+
+        // Add product info back to the model to repopulate the page for validation errors
+        model.addAttribute("product", product);
 
         // 2. Validate the size
         Size selectedSize;
         try {
             selectedSize = Size.valueOf(size.toUpperCase());
         } catch (IllegalArgumentException e) {
-            // Invalid size value provided by the user
             model.addAttribute("errorMessage", "Invalid size selected. Please choose a valid size.");
-            return "product_details"; // Show error on product_details page
+            return "product_details"; // Return to product_details with an error
         }
 
-        // 3. Add item to the cart
+        // 3. Check inventory for the selected size
+        boolean isAvailable = productService.isStockAvailable(product, size, quantity);
+        if (!isAvailable) {
+            model.addAttribute("errorMessage",
+                    "Selected size '" + size.toUpperCase() + "' is out of stock or insufficient stock.");
+            return "product_details"; // Redirect to product_details with an error
+        }
+
+        // 4. Add the item to the cart
         CartItem cartItem = new CartItem();
         cartItem.setProduct(product);
         cartItem.setSize(selectedSize);
         cartItem.setQuantity(quantity);
+        cartService.addToCart(cartItem); // Add the item to the cart
 
-        // Call the cart service to add this product to the user's cart
-        cartService.addToCart(cartItem);
+        // 5. Deduct inventory for the size
+        productService.updateStock(product, size, quantity);
 
-        // 4. Redirect the user to the cart page after successful addition
+        // 6. Redirect to the cart page after successfully adding the item
         return "redirect:/cart"; // Redirect to the cart page to show updated cart
     }
     // Remove a product from the cart
